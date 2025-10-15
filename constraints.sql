@@ -250,3 +250,23 @@ CREATE CONSTRAINT TRIGGER enforce_campaign_has_ad_sets
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
     EXECUTE FUNCTION check_campaign_ad_set_exists();
+
+CREATE OR REPLACE FUNCTION check_employee_self_reference()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.manager_id IS NOT NULL AND NEW.manager_id = NEW.id THEN
+        RAISE EXCEPTION 'Employee % cannot be their own manager', NEW.id;
+    END IF;
+
+    IF NEW.mentor_id IS NOT NULL AND NEW.mentor_id = NEW.id THEN
+        RAISE EXCEPTION 'Employee % cannot be their own mentor', NEW.id;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER prevent_employee_self_reference
+    BEFORE INSERT OR UPDATE ON employee
+    FOR EACH ROW
+    EXECUTE FUNCTION check_employee_self_reference();
