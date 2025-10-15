@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS client CASCADE;
 
 CREATE TABLE client (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -28,7 +28,7 @@ CREATE TABLE employee (
 
 CREATE TABLE campaign (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     start_date DATE NOT NULL,
     finish_date DATE NOT NULL,
     client_id INTEGER NOT NULL REFERENCES client(id) ON DELETE CASCADE,
@@ -62,7 +62,7 @@ CREATE TABLE ad_set (
 
 CREATE TABLE media_asset (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     file_path TEXT NOT NULL UNIQUE,
     creation_date DATE NOT NULL DEFAULT CURRENT_DATE
 );
