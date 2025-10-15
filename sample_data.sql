@@ -19,11 +19,12 @@ INSERT INTO employee (id, name, position, manager_id, mentor_id) VALUES
 INSERT INTO employee (id, name, position, manager_id, mentor_id) VALUES
     (2, 'Michael Chen', 'VP of Marketing', 1, NULL);
 
+-- Note: mentor_id must be UNIQUE, so each employee can have at most one mentee
 INSERT INTO employee (id, name, position, manager_id, mentor_id) VALUES
-    (3, 'Jessica Taylor', 'Campaign Manager', 2, 2),
-    (4, 'Robert Martinez', 'Campaign Manager', 2, 3),
-    (5, 'Amanda Lee', 'Campaign Manager', 2, NULL),
-    (6, 'Christopher Brown', 'Campaign Manager', 2, NULL);
+    (3, 'Jessica Taylor', 'Campaign Manager', 2, 2),      -- mentored by Michael
+    (4, 'Robert Martinez', 'Campaign Manager', 2, NULL),  -- no mentor assigned yet
+    (5, 'Amanda Lee', 'Campaign Manager', 2, NULL),       -- no mentor assigned yet
+    (6, 'Christopher Brown', 'Campaign Manager', 2, NULL); -- no mentor assigned yet
 
 SELECT setval('employee_id_seq', 6, true);
 
@@ -42,7 +43,7 @@ INSERT INTO ad_platform (name) VALUES
 -- 4. CAMPAIGNS WITH PLATFORMS AND AD SETS
 -- ============================================================================
 
--- 1
+-- Campaign 1: TechCorp
 INSERT INTO campaign (id, name, start_date, finish_date, client_id, manager_id) VALUES
     (1, 'TechCorp Product Launch Q4', '2025-10-01', '2025-12-31', 1, 3);
 
@@ -51,13 +52,13 @@ INSERT INTO campaign_platform (campaign_id, platform_id, budget) VALUES
     (1, 2, 30000.00),  -- Facebook Ads
     (1, 5, 20000.00);  -- LinkedIn Ads
 
+-- Note: ad_set names must be unique within each campaign
 INSERT INTO ad_set (id, name, target_age, target_gender, target_country, campaign_id) VALUES
     (1, 'Tech Professionals 25-40', '25-40', 'all', 'US', 1),
     (2, 'Tech Enthusiasts 18-34', '18-34', 'male', 'US', 1),
     (3, 'Business Decision Makers', '35-55', 'all', 'US', 1);
 
-
--- 2
+-- Campaign 2: Fashion Forward
 INSERT INTO campaign (id, name, start_date, finish_date, client_id, manager_id) VALUES
     (2, 'Spring Collection 2025', '2025-02-01', '2025-04-30', 2, 4);
 
@@ -70,7 +71,7 @@ INSERT INTO ad_set (id, name, target_age, target_gender, target_country, campaig
     (4, 'Young Women Fashion', '18-29', 'female', 'US', 2),
     (5, 'Urban Style Seekers', '25-40', 'all', 'US', 2);
 
--- 3
+-- Campaign 3: GreenEarth
 INSERT INTO campaign (id, name, start_date, finish_date, client_id, manager_id) VALUES
     (3, 'Go Green Campaign 2025', '2025-01-15', '2025-06-30', 3, 5);
 
@@ -82,7 +83,7 @@ INSERT INTO ad_set (id, name, target_age, target_gender, target_country, campaig
     (6, 'Eco-Conscious Millennials', '25-40', 'all', 'US', 3),
     (7, 'Environmental Advocates', '30-55', 'all', 'US', 3);
 
--- 4
+-- Campaign 4: FitLife
 INSERT INTO campaign (id, name, start_date, finish_date, client_id, manager_id) VALUES
     (4, 'FitLife Protein Launch', '2024-11-01', '2025-01-31', 4, 6);
 
@@ -101,67 +102,67 @@ SELECT setval('ad_set_id_seq', 9, true);
 -- ============================================================================
 -- 5. MEDIA ASSETS (Videos and Images)
 -- ============================================================================
--- Must insert media_asset and its subtype in same transaction due to deferred constraint
+-- Note: media_type field removed - type is determined by presence in video/image table
 
 -- Videos
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (1, 'TechCorp Product Demo', '/media/videos/techcorp_demo_v1.mp4', '2024-09-15', 'video');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (1, 'TechCorp Product Demo', '/media/videos/techcorp_demo_v1.mp4', '2024-09-15');
 INSERT INTO video (media_asset_id, duration) VALUES
     (1, 45);
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (2, 'Fashion Spring Preview', '/media/videos/fashion_spring_2025.mp4', '2025-01-10', 'video');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (2, 'Fashion Spring Preview', '/media/videos/fashion_spring_2025.mp4', '2025-01-10');
 INSERT INTO video (media_asset_id, duration) VALUES
     (2, 30);
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (3, 'GreenEarth Story', '/media/videos/greenearth_story.mp4', '2024-12-20', 'video');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (3, 'GreenEarth Story', '/media/videos/greenearth_story.mp4', '2024-12-20');
 INSERT INTO video (media_asset_id, duration) VALUES
     (3, 60);
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (4, 'FitLife Workout', '/media/videos/fitlife_workout.mp4', '2024-10-25', 'video');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (4, 'FitLife Workout', '/media/videos/fitlife_workout.mp4', '2024-10-25');
 INSERT INTO video (media_asset_id, duration) VALUES
     (4, 15);
 
 -- Images
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (5, 'TechCorp Product Shot', '/media/images/techcorp_product_01.jpg', '2024-09-10', 'image');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (5, 'TechCorp Product Shot', '/media/images/techcorp_product_01.jpg', '2024-09-10');
 INSERT INTO image (media_asset_id, resolution) VALUES
     (5, '1920x1080');
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (6, 'TechCorp Lifestyle', '/media/images/techcorp_lifestyle_01.jpg', '2024-09-12', 'image');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (6, 'TechCorp Lifestyle', '/media/images/techcorp_lifestyle_01.jpg', '2024-09-12');
 INSERT INTO image (media_asset_id, resolution) VALUES
     (6, '1200x628');
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (7, 'Fashion Model Shoot', '/media/images/fashion_model_spring_01.jpg', '2025-01-05', 'image');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (7, 'Fashion Model Shoot', '/media/images/fashion_model_spring_01.jpg', '2025-01-05');
 INSERT INTO image (media_asset_id, resolution) VALUES
     (7, '1080x1350');
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (8, 'Fashion Collection Flat Lay', '/media/images/fashion_flatlay_01.jpg', '2025-01-08', 'image');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (8, 'Fashion Collection Flat Lay', '/media/images/fashion_flatlay_01.jpg', '2025-01-08');
 INSERT INTO image (media_asset_id, resolution) VALUES
     (8, '1920x1080');
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (9, 'GreenEarth Nature', '/media/images/greenearth_nature_01.jpg', '2024-12-15', 'image');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (9, 'GreenEarth Nature', '/media/images/greenearth_nature_01.jpg', '2024-12-15');
 INSERT INTO image (media_asset_id, resolution) VALUES
     (9, '1920x1080');
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (10, 'GreenEarth Products', '/media/images/greenearth_products_01.jpg', '2024-12-18', 'image');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (10, 'GreenEarth Products', '/media/images/greenearth_products_01.jpg', '2024-12-18');
 INSERT INTO image (media_asset_id, resolution) VALUES
     (10, '1200x1200');
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (11, 'FitLife Product', '/media/images/fitlife_protein_01.jpg', '2024-10-20', 'image');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (11, 'FitLife Product', '/media/images/fitlife_protein_01.jpg', '2024-10-20');
 INSERT INTO image (media_asset_id, resolution) VALUES
     (11, '1080x1080');
 
-INSERT INTO media_asset (id, name, file_path, creation_date, media_type) VALUES
-    (12, 'FitLife Athletes', '/media/images/fitlife_athletes_01.jpg', '2024-10-22', 'image');
+INSERT INTO media_asset (id, name, file_path, creation_date) VALUES
+    (12, 'FitLife Athletes', '/media/images/fitlife_athletes_01.jpg', '2024-10-22');
 INSERT INTO image (media_asset_id, resolution) VALUES
     (12, '1920x1080');
 
@@ -171,6 +172,7 @@ SELECT setval('media_asset_id_seq', 12, true);
 -- ============================================================================
 -- 6. AD TEXTS
 -- ============================================================================
+-- Note: text field must be unique
 INSERT INTO ad_text (id, text) VALUES
     (1, 'Introducing our revolutionary new product. Innovation meets simplicity.'),
     (2, 'Transform your workflow with TechCorp. Join 10,000+ satisfied customers.'),

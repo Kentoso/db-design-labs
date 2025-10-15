@@ -22,7 +22,7 @@ CREATE TABLE employee (
     name TEXT NOT NULL,
     position TEXT NOT NULL,
     manager_id INTEGER REFERENCES employee(id) ON DELETE SET NULL,
-    mentor_id INTEGER REFERENCES employee(id) ON DELETE SET NULL,
+    mentor_id INTEGER REFERENCES employee(id) ON DELETE SET NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -56,15 +56,15 @@ CREATE TABLE ad_set (
     target_gender TEXT,
     target_country TEXT,
     campaign_id INTEGER NOT NULL REFERENCES campaign(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (campaign_id, name)
 );
 
 CREATE TABLE media_asset (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     file_path TEXT NOT NULL UNIQUE,
-    creation_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    media_type TEXT NOT NULL CHECK (media_type IN ('video', 'image'))
+    creation_date DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 CREATE TABLE video (
@@ -79,7 +79,7 @@ CREATE TABLE image (
 
 CREATE TABLE ad_text (
     id SERIAL PRIMARY KEY,
-    text TEXT NOT NULL,
+    text TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
