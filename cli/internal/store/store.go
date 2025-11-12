@@ -87,6 +87,37 @@ func (db *DB) Close() error {
 	return err
 }
 
+// Stats represents counts of slot states in the DB file.
+type Stats struct {
+    Empty    int
+    Occupied int
+    Deleted  int
+    Total    int
+}
+
+// Stats scans all slots and returns the distribution of states.
+func (db *DB) Stats() (Stats, error) {
+    db.mu.RLock()
+    defer db.mu.RUnlock()
+    var s Stats
+    for i := 0; i < db.slots; i++ {
+        state, _, _, err := db.readSlot(i)
+        if err != nil {
+            return s, err
+        }
+        s.Total++
+        switch state {
+        case StateEmpty:
+            s.Empty++
+        case StateOcc:
+            s.Occupied++
+        case StateDeleted:
+            s.Deleted++
+        }
+    }
+    return s, nil
+}
+
 var ErrKeyExists = errors.New("key already exists")
 
 // Insert stores the value for the given string key.
