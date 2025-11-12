@@ -1,15 +1,16 @@
 package main
 
 import (
-	"bufio"
-	"encoding/json"
-	"errors"
-	"flag"
-	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
+    "bufio"
+    "bytes"
+    "encoding/json"
+    "errors"
+    "flag"
+    "fmt"
+    "os"
+    "path/filepath"
+    "strconv"
+    "strings"
 
 	"github.com/Kentoso/db-design-labs/internal/store"
 )
@@ -203,12 +204,12 @@ func processLine(db *store.DB, line string) bool {
 			}
 		}
 		fmt.Printf("dense_zones %d (threshold %d)\n", len(filtered), threshold)
-		// write all to dense_zones.txt (in current directory)
-		if err := writeDenseZonesFile("dense_zones.txt", filtered); err != nil {
-			fmt.Fprintf(os.Stderr, "write dense_zones.txt: %v\n", err)
-		} else {
-			fmt.Println("saved dense_zones.txt")
-		}
+        // write all details to dense_zones.txt (in current directory)
+        if err := writeDenseZonesFile("dense_zones.txt", db, filtered); err != nil {
+            fmt.Fprintf(os.Stderr, "write dense_zones.txt: %v\n", err)
+        } else {
+            fmt.Println("saved dense_zones.txt")
+        }
 		// show top 10 on stdout
 		limit := 10
 		if len(filtered) < limit {
@@ -229,20 +230,38 @@ func processLine(db *store.DB, line string) bool {
 	return true
 }
 
-func writeDenseZonesFile(path string, runs []run) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	// header
-	if _, err := fmt.Fprintf(f, "# dense zones (start length)\n"); err != nil {
-		return err
-	}
-	for _, r := range runs {
-		if _, err := fmt.Fprintf(f, "%d %d\n", r.start, r.length); err != nil {
-			return err
-		}
-	}
-	return nil
+func writeDenseZonesFile(path string, db *store.DB, runs []run) error {
+    f, err := os.Create(path)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+    // header
+    if _, err := fmt.Fprintf(f, "# Dense zones report\n# Each section shows contiguous occupied slots with deserialized payloads.\n\n"); err != nil {
+        return err
+    }
+    sep := strings.Repeat("=", 72)
+    for zi, r := range runs {
+        if _, err := fmt.Fprintf(f, "%s\nZONE %d  start %d  length %d\n%s\n", sep, zi+1, r.start, r.length, sep); err != nil {
+            return err
+        }
+        for pos := r.start; pos < r.start+r.length; pos++ {
+            d, err := db.SlotDetail(pos)
+            if err != nil {
+                return err
+            }
+            // pretty-print JSON data
+            pretty := d.Data
+            if len(d.Data) > 0 {
+                var buf bytes.Buffer
+                if err := json.Indent(&buf, d.Data, "", "  "); err == nil {
+                    pretty = buf.Bytes()
+                }
+            }
+            if _, err := fmt.Fprintf(f, "- position: %d\n  key: %s\n  hash: %d\n  data: %s\n\n", d.Index, d.Key, d.Hash, string(pretty)); err != nil {
+                return err
+            }
+        }
+    }
+    return nil
 }

@@ -1,10 +1,10 @@
 package store
 
 import (
-	"encoding/binary"
-	"encoding/json"
-	"errors"
-	"fmt"
+    "encoding/binary"
+    "encoding/json"
+    "errors"
+    "fmt"
 	"hash/fnv"
 	"math"
 	"os"
@@ -145,6 +145,36 @@ func (db *DB) Clear() error {
         }
     }
     return nil
+}
+
+// SlotDetail describes the content of a slot at a given index.
+type SlotDetail struct {
+    Index int
+    State byte
+    Hash  uint32
+    Key   string
+    Type  string
+    Data  json.RawMessage
+}
+
+// SlotDetail returns details for slot at index. For occupied slots, Key/Type/Data are filled from the envelope.
+func (db *DB) SlotDetail(index int) (SlotDetail, error) {
+    var d SlotDetail
+    d.Index = index
+    state, sk, payload, err := db.readSlot(index)
+    if err != nil {
+        return d, err
+    }
+    d.State = state
+    d.Hash = sk
+    if state == StateOcc {
+        if env, err := decodeEnvelope(payload); err == nil {
+            d.Key = env.Key
+            d.Type = env.Type
+            d.Data = env.Data
+        }
+    }
+    return d, nil
 }
 
 var ErrKeyExists = errors.New("key already exists")
