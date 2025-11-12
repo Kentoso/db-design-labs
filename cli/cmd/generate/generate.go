@@ -9,6 +9,7 @@ import (
     "path/filepath"
     "strings"
     "time"
+    "strconv"
 )
 
 var (
@@ -16,6 +17,8 @@ var (
     count   = flag.Int("n", 100, "number of lines to generate")
     model   = flag.String("model", "client", "model name to generate (client, employee, campaign, ad_platform, campaign_platform, ad_set, media_asset, video, image, ad_text, ad)")
     seed    = flag.Int64("seed", time.Now().UnixNano(), "random seed")
+    keyType = flag.String("key", "model", "key type: 'model' for <model>:<id>, 'int' for integer key")
+    maxInt  = flag.Int("max", 100000, "max value for integer key (when -key=int)")
 )
 
 func main() {
@@ -40,7 +43,7 @@ func main() {
 
     m := strings.ToLower(*model)
     for i := 1; i <= *count; i++ {
-        key, payload := generate(m, i)
+        key, payload := generate(m, i, *keyType, *maxInt)
         line := fmt.Sprintf("insert %s %s\n", key, string(payload))
         if _, err := f.WriteString(line); err != nil {
             fmt.Fprintf(os.Stderr, "write: %v\n", err)
@@ -49,11 +52,21 @@ func main() {
     }
 }
 
-func generate(model string, id int) (string, []byte) {
+func generate(model string, id int, keyStyle string, maxInt int) (string, []byte) {
     ts := time.Now().UTC().Format(time.RFC3339)
+    // helper to wrap key depending on key style
+    mkKey := func(defaultKey string) string {
+        if strings.ToLower(keyStyle) == "int" {
+            if maxInt <= 0 { maxInt = 100000 }
+            // random integer key in [1, maxInt]
+            k := rand.Intn(maxInt) + 1
+            return strconv.Itoa(k)
+        }
+        return defaultKey
+    }
     switch model {
     case "client":
-        key := fmt.Sprintf("client:%d", id)
+        key := mkKey(fmt.Sprintf("client:%d", id))
         obj := map[string]any{
             "id":        id,
             "name":      fmt.Sprintf("Client %d", id),
@@ -62,7 +75,7 @@ func generate(model string, id int) (string, []byte) {
         }
         return key, mustJSON(obj)
     case "employee":
-        key := fmt.Sprintf("employee:%d", id)
+        key := mkKey(fmt.Sprintf("employee:%d", id))
         obj := map[string]any{
             "id":        id,
             "name":      fmt.Sprintf("Employee %d", id),
@@ -71,7 +84,7 @@ func generate(model string, id int) (string, []byte) {
         }
         return key, mustJSON(obj)
     case "campaign":
-        key := fmt.Sprintf("campaign:%d", id)
+        key := mkKey(fmt.Sprintf("campaign:%d", id))
         start := time.Now().UTC().AddDate(0, 0, rand.Intn(10))
         finish := start.AddDate(0, 0, 7+rand.Intn(14))
         obj := map[string]any{
@@ -85,11 +98,11 @@ func generate(model string, id int) (string, []byte) {
         }
         return key, mustJSON(obj)
     case "ad_platform":
-        key := fmt.Sprintf("ad_platform:%d", id)
+        key := mkKey(fmt.Sprintf("ad_platform:%d", id))
         obj := map[string]any{"id": id, "name": pick([]string{"Meta", "Google", "TikTok", "X"}, id)}
         return key, mustJSON(obj)
     case "campaign_platform":
-        key := fmt.Sprintf("campaign_platform:%d", id)
+        key := mkKey(fmt.Sprintf("campaign_platform:%d", id))
         obj := map[string]any{
             "campaignId": 1 + (id % 7),
             "platformId": 1 + (id % 4),
@@ -97,7 +110,7 @@ func generate(model string, id int) (string, []byte) {
         }
         return key, mustJSON(obj)
     case "ad_set":
-        key := fmt.Sprintf("ad_set:%d", id)
+        key := mkKey(fmt.Sprintf("ad_set:%d", id))
         obj := map[string]any{
             "id":           id,
             "name":         fmt.Sprintf("AdSet %d", id),
@@ -109,7 +122,7 @@ func generate(model string, id int) (string, []byte) {
         }
         return key, mustJSON(obj)
     case "media_asset":
-        key := fmt.Sprintf("media_asset:%d", id)
+        key := mkKey(fmt.Sprintf("media_asset:%d", id))
         obj := map[string]any{
             "id":           id,
             "name":         fmt.Sprintf("asset_%d", id),
@@ -118,19 +131,19 @@ func generate(model string, id int) (string, []byte) {
         }
         return key, mustJSON(obj)
     case "video":
-        key := fmt.Sprintf("video:%d", id)
+        key := mkKey(fmt.Sprintf("video:%d", id))
         obj := map[string]any{"mediaAssetId": id, "duration": 30 + (id % 60)}
         return key, mustJSON(obj)
     case "image":
-        key := fmt.Sprintf("image:%d", id)
+        key := mkKey(fmt.Sprintf("image:%d", id))
         obj := map[string]any{"mediaAssetId": id, "resolution": "1080x1080"}
         return key, mustJSON(obj)
     case "ad_text":
-        key := fmt.Sprintf("ad_text:%d", id)
+        key := mkKey(fmt.Sprintf("ad_text:%d", id))
         obj := map[string]any{"id": id, "text": fmt.Sprintf("Buy now %d!", id), "createdAt": ts}
         return key, mustJSON(obj)
     case "ad":
-        key := fmt.Sprintf("ad:%d", id)
+        key := mkKey(fmt.Sprintf("ad:%d", id))
         obj := map[string]any{
             "id":           id,
             "adSetId":      1 + (id % 7),
@@ -141,7 +154,7 @@ func generate(model string, id int) (string, []byte) {
         return key, mustJSON(obj)
     default:
         // fallback to client
-        key := fmt.Sprintf("client:%d", id)
+        key := mkKey(fmt.Sprintf("client:%d", id))
         obj := map[string]any{
             "id":        id,
             "name":      fmt.Sprintf("Client %d", id),

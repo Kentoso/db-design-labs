@@ -133,6 +133,20 @@ func (db *DB) States() ([]byte, error) {
     return out, nil
 }
 
+// Clear resets all slots to StateEmpty and zero payloads.
+func (db *DB) Clear() error {
+    db.mu.Lock()
+    defer db.mu.Unlock()
+    zero := make([]byte, SlotSize)
+    for i := 0; i < db.slots; i++ {
+        off := int64(i * SlotSize)
+        if _, err := db.f.WriteAt(zero, off); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
 var ErrKeyExists = errors.New("key already exists")
 
 // Insert stores the value for the given string key.
