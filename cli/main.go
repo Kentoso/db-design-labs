@@ -145,10 +145,53 @@ func processLine(db *store.DB, line string) bool {
 			fmt.Fprintf(os.Stderr, "scan: %v\n", err)
 			return true
 		}
+		states, err := db.States()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "scan states: %v\n", err)
+			return true
+		}
+		lf := 0.0
+		if stats.Total > 0 {
+			lf = float64(stats.Occupied) / float64(stats.Total)
+		}
 		fmt.Printf("empty %d\n", stats.Empty)
 		fmt.Printf("occupied %d\n", stats.Occupied)
 		fmt.Printf("deleted %d\n", stats.Deleted)
 		fmt.Printf("total %d\n", stats.Total)
+		fmt.Printf("load_factor %.4f\n", lf)
+		// Dense zones: contiguous occupied runs; report top 10
+		type run struct{ start, length int }
+		var runs []run
+		for i := 0; i < len(states); {
+			if states[i] != store.StateOcc {
+				i++
+				continue
+			}
+			j := i
+			for j < len(states) && states[j] == store.StateOcc {
+				j++
+			}
+			runs = append(runs, run{start: i, length: j - i})
+			i = j
+		}
+		// sort by length desc (selection sort)
+		for a := 0; a < len(runs); a++ {
+			maxIdx := a
+			for b := a + 1; b < len(runs); b++ {
+				if runs[b].length > runs[maxIdx].length {
+					maxIdx = b
+				}
+			}
+			runs[a], runs[maxIdx] = runs[maxIdx], runs[a]
+		}
+		fmt.Printf("dense_zones %d\n", len(runs))
+		limit := 10
+		if len(runs) < limit {
+			limit = len(runs)
+		}
+		for i := 0; i < limit; i++ {
+			fmt.Printf("zone %d start %d length %d\n", i+1, runs[i].start, runs[i].length)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 	}

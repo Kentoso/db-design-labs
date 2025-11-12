@@ -118,6 +118,21 @@ func (db *DB) Stats() (Stats, error) {
     return s, nil
 }
 
+// States returns a slice with the state byte of each slot in order.
+func (db *DB) States() ([]byte, error) {
+    db.mu.RLock()
+    defer db.mu.RUnlock()
+    out := make([]byte, db.slots)
+    for i := 0; i < db.slots; i++ {
+        state, _, _, err := db.readSlot(i)
+        if err != nil {
+            return nil, err
+        }
+        out[i] = state
+    }
+    return out, nil
+}
+
 var ErrKeyExists = errors.New("key already exists")
 
 // Insert stores the value for the given string key.
