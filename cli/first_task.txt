@@ -1,0 +1,1054 @@
+# Алгоритм хешування
+Використано хешування за допомогою залишку від ділення найближчого до кількості слотів простого числа.
+Ключі типу string, спочатку перетворюються у числовий вигляд за допомогою FNV хешування. Для вирішення колізій використовуємо лінійне зондування.
+
+# Предметна область
+Рекламне агентство
+1) Агентство працює з клієнтами (ім'я, email), які замовляють рекламні кампанії (назва, дати початку та завершення). Один клієнт може мати багато кампаній.2) В агентстві працюють співробітники (ім'я, посада). Кожен співробітник має менеджера. Також деякі співробітниками є менторами, що мають менті. Кожну кампанію веде один відповідальний співробітник. Кожен співробітник може вести одну кампанію.
+3) Кампанії містять рекламні групи з параметрами таргетингу (вік, стать, країна). Кампанії розміщуються на різних платформах (Google Ads, Facebook) з виділеним бюджетом для кожної
+4) Для реклами використовуються медіа файли: відео (з тривалістю) та зображення (з роздільною здатністю), а також рекламні тексти. 
+5) Готове рекламне оголошення формується поєднанням рекламної групи, медіа-активу та тексту. Медіа можуть використовуватись в різних рекламних групах із різними текстами. Так само рекламні групи можуть містити кілька поєднань медіа і текстів. А одні й ті самі тексти можуть використовуватись з кількома комбінаціями рекламних груп і медіа.
+
+ER діаграма прикладена до листа
+
+# Витяг з вхідного файлу
+insert 56936 {"createdAt":"2025-11-12T10:04:13Z","email":"client001@example.com","id":1,"name":"Client 1"}
+insert 12171 {"createdAt":"2025-11-12T10:04:13Z","email":"client002@example.com","id":2,"name":"Client 2"}
+insert 90723 {"createdAt":"2025-11-12T10:04:13Z","email":"client003@example.com","id":3,"name":"Client 3"}
+insert 66894 {"createdAt":"2025-11-12T10:04:13Z","email":"client004@example.com","id":4,"name":"Client 4"}
+insert 77088 {"createdAt":"2025-11-12T10:04:13Z","email":"client005@example.com","id":5,"name":"Client 5"}
+insert 39931 {"createdAt":"2025-11-12T10:04:13Z","email":"client006@example.com","id":6,"name":"Client 6"}
+insert 31588 {"createdAt":"2025-11-12T10:04:13Z","email":"client007@example.com","id":7,"name":"Client 7"}
+insert 98623 {"createdAt":"2025-11-12T10:04:13Z","email":"client008@example.com","id":8,"name":"Client 8"}
+
+Ключі - випадкові числа до 100 000
+
+# Теоретичне дослідження
+Розмір простору ключів 100 000 (згідно з тим як ми генеруємо вхідний файл). Кількість записів 1000, загальий розмір таблиці 5000.
+
+## Звіт:
+empty 4003
+occupied 997
+deleted 0
+total 5000
+load_factor 0.1994
+dense_zones 21 (threshold 4)
+saved dense_zones.txt
+zone 1 start 1447 end 1452 length 6
+zone 2 start 205 end 209 length 5
+zone 3 start 257 end 261 length 5
+zone 4 start 1031 end 1035 length 5
+zone 5 start 1355 end 1359 length 5
+zone 6 start 1557 end 1561 length 5
+zone 7 start 1989 end 1993 length 5
+zone 8 start 3720 end 3724 length 5
+zone 9 start 4694 end 4698 length 5
+zone 10 start 352 end 355 length 4
+
+## Детальний звіт:
+# Dense zones report
+# Each section shows contiguous occupied slots with deserialized payloads.
+
+========================================================================
+ZONE 1  start 1447  end 1452  length 6
+========================================================================
+- position: 1447
+  key: 99150
+  hash: 3434154479
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client530@example.com",
+  "id": 530,
+  "name": "Client 530"
+}
+
+- position: 1448
+  key: 31588
+  hash: 2149591444
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client007@example.com",
+  "id": 7,
+  "name": "Client 7"
+}
+
+- position: 1449
+  key: 99148
+  hash: 1320027390
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client529@example.com",
+  "id": 529,
+  "name": "Client 529"
+}
+
+- position: 1450
+  key: 64653
+  hash: 1607834819
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client256@example.com",
+  "id": 256,
+  "name": "Client 256"
+}
+
+- position: 1451
+  key: 63703
+  hash: 2648771590
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client449@example.com",
+  "id": 449,
+  "name": "Client 449"
+}
+
+- position: 1452
+  key: 7065
+  hash: 4037653755
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client668@example.com",
+  "id": 668,
+  "name": "Client 668"
+}
+
+========================================================================
+ZONE 2  start 205  end 209  length 5
+========================================================================
+- position: 205
+  key: 54809
+  hash: 646380903
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client199@example.com",
+  "id": 199,
+  "name": "Client 199"
+}
+
+- position: 206
+  key: 47092
+  hash: 2632343631
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client867@example.com",
+  "id": 867,
+  "name": "Client 867"
+}
+
+- position: 207
+  key: 19633
+  hash: 4168916257
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client799@example.com",
+  "id": 799,
+  "name": "Client 799"
+}
+
+- position: 208
+  key: 13505
+  hash: 762572663
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client500@example.com",
+  "id": 500,
+  "name": "Client 500"
+}
+
+- position: 209
+  key: 27916
+  hash: 2049960134
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client659@example.com",
+  "id": 659,
+  "name": "Client 659"
+}
+
+========================================================================
+ZONE 3  start 257  end 261  length 5
+========================================================================
+- position: 257
+  key: 12584
+  hash: 3596400833
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client570@example.com",
+  "id": 570,
+  "name": "Client 570"
+}
+
+- position: 258
+  key: 90162
+  hash: 1816506883
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client572@example.com",
+  "id": 572,
+  "name": "Client 572"
+}
+
+- position: 259
+  key: 62245
+  hash: 520641110
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client672@example.com",
+  "id": 672,
+  "name": "Client 672"
+}
+
+- position: 260
+  key: 47531
+  hash: 1528099579
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client015@example.com",
+  "id": 15,
+  "name": "Client 15"
+}
+
+- position: 261
+  key: 99361
+  hash: 2260743021
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client226@example.com",
+  "id": 226,
+  "name": "Client 226"
+}
+
+========================================================================
+ZONE 4  start 1031  end 1035  length 5
+========================================================================
+- position: 1031
+  key: 62886
+  hash: 3147981309
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client090@example.com",
+  "id": 90,
+  "name": "Client 90"
+}
+
+- position: 1032
+  key: 26942
+  hash: 56174794
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client862@example.com",
+  "id": 862,
+  "name": "Client 862"
+}
+
+- position: 1033
+  key: 80898
+  hash: 3335388822
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client338@example.com",
+  "id": 338,
+  "name": "Client 338"
+}
+
+- position: 1034
+  key: 61876
+  hash: 2922981321
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client418@example.com",
+  "id": 418,
+  "name": "Client 418"
+}
+
+- position: 1035
+  key: 49584
+  hash: 3735953693
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client473@example.com",
+  "id": 473,
+  "name": "Client 473"
+}
+
+========================================================================
+ZONE 5  start 1355  end 1359  length 5
+========================================================================
+- position: 1355
+  key: 25057
+  hash: 147706808
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client141@example.com",
+  "id": 141,
+  "name": "Client 141"
+}
+
+- position: 1356
+  key: 95352
+  hash: 80530247
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client460@example.com",
+  "id": 460,
+  "name": "Client 460"
+}
+
+- position: 1357
+  key: 58511
+  hash: 1846931897
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client406@example.com",
+  "id": 406,
+  "name": "Client 406"
+}
+
+- position: 1358
+  key: 35319
+  hash: 3954880224
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client223@example.com",
+  "id": 223,
+  "name": "Client 223"
+}
+
+- position: 1359
+  key: 20851
+  hash: 2457089843
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client540@example.com",
+  "id": 540,
+  "name": "Client 540"
+}
+
+========================================================================
+ZONE 6  start 1557  end 1561  length 5
+========================================================================
+- position: 1557
+  key: 87750
+  hash: 3057934848
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client085@example.com",
+  "id": 85,
+  "name": "Client 85"
+}
+
+- position: 1558
+  key: 7295
+  hash: 464748590
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client701@example.com",
+  "id": 701,
+  "name": "Client 701"
+}
+
+- position: 1559
+  key: 8856
+  hash: 2944877466
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client752@example.com",
+  "id": 752,
+  "name": "Client 752"
+}
+
+- position: 1560
+  key: 87903
+  hash: 2478635734
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client916@example.com",
+  "id": 916,
+  "name": "Client 916"
+}
+
+- position: 1561
+  key: 73239
+  hash: 1824406607
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client695@example.com",
+  "id": 695,
+  "name": "Client 695"
+}
+
+========================================================================
+ZONE 7  start 1989  end 1993  length 5
+========================================================================
+- position: 1989
+  key: 50432
+  hash: 1672347453
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client555@example.com",
+  "id": 555,
+  "name": "Client 555"
+}
+
+- position: 1990
+  key: 18338
+  hash: 2833995078
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client246@example.com",
+  "id": 246,
+  "name": "Client 246"
+}
+
+- position: 1991
+  key: 15522
+  hash: 2334020094
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client176@example.com",
+  "id": 176,
+  "name": "Client 176"
+}
+
+- position: 1992
+  key: 23218
+  hash: 2686844513
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client821@example.com",
+  "id": 821,
+  "name": "Client 821"
+}
+
+- position: 1993
+  key: 40607
+  hash: 142698448
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client694@example.com",
+  "id": 694,
+  "name": "Client 694"
+}
+
+========================================================================
+ZONE 8  start 3720  end 3724  length 5
+========================================================================
+- position: 3720
+  key: 280
+  hash: 872124261
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client711@example.com",
+  "id": 711,
+  "name": "Client 711"
+}
+
+- position: 3721
+  key: 56700
+  hash: 1855962455
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client195@example.com",
+  "id": 195,
+  "name": "Client 195"
+}
+
+- position: 3722
+  key: 30774
+  hash: 214450824
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client107@example.com",
+  "id": 107,
+  "name": "Client 107"
+}
+
+- position: 3723
+  key: 56288
+  hash: 1015120656
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client925@example.com",
+  "id": 925,
+  "name": "Client 925"
+}
+
+- position: 3724
+  key: 30202
+  hash: 1237911090
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client989@example.com",
+  "id": 989,
+  "name": "Client 989"
+}
+
+========================================================================
+ZONE 9  start 4694  end 4698  length 5
+========================================================================
+- position: 4694
+  key: 47693
+  hash: 1101164418
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client178@example.com",
+  "id": 178,
+  "name": "Client 178"
+}
+
+- position: 4695
+  key: 3618
+  hash: 2336707261
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client122@example.com",
+  "id": 122,
+  "name": "Client 122"
+}
+
+- position: 4696
+  key: 25150
+  hash: 1671280374
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client400@example.com",
+  "id": 400,
+  "name": "Client 400"
+}
+
+- position: 4697
+  key: 65199
+  hash: 1403443953
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client165@example.com",
+  "id": 165,
+  "name": "Client 165"
+}
+
+- position: 4698
+  key: 60927
+  hash: 3990926353
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client663@example.com",
+  "id": 663,
+  "name": "Client 663"
+}
+
+========================================================================
+ZONE 10  start 352  end 355  length 4
+========================================================================
+- position: 352
+  key: 61515
+  hash: 925590197
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client878@example.com",
+  "id": 878,
+  "name": "Client 878"
+}
+
+- position: 353
+  key: 29208
+  hash: 1413232650
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client602@example.com",
+  "id": 602,
+  "name": "Client 602"
+}
+
+- position: 354
+  key: 71697
+  hash: 4096645861
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client344@example.com",
+  "id": 344,
+  "name": "Client 344"
+}
+
+- position: 355
+  key: 67539
+  hash: 3032563721
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client137@example.com",
+  "id": 137,
+  "name": "Client 137"
+}
+
+========================================================================
+ZONE 11  start 1060  end 1063  length 4
+========================================================================
+- position: 1060
+  key: 30122
+  hash: 2458024357
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client696@example.com",
+  "id": 696,
+  "name": "Client 696"
+}
+
+- position: 1061
+  key: 44418
+  hash: 537348570
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client281@example.com",
+  "id": 281,
+  "name": "Client 281"
+}
+
+- position: 1062
+  key: 2132
+  hash: 3885948717
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client614@example.com",
+  "id": 614,
+  "name": "Client 614"
+}
+
+- position: 1063
+  key: 32676
+  hash: 67832491
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client774@example.com",
+  "id": 774,
+  "name": "Client 774"
+}
+
+========================================================================
+ZONE 12  start 1363  end 1366  length 4
+========================================================================
+- position: 1363
+  key: 2534
+  hash: 2919477351
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client900@example.com",
+  "id": 900,
+  "name": "Client 900"
+}
+
+- position: 1364
+  key: 20935
+  hash: 2896791890
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client692@example.com",
+  "id": 692,
+  "name": "Client 692"
+}
+
+- position: 1365
+  key: 90749
+  hash: 586339074
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client968@example.com",
+  "id": 968,
+  "name": "Client 968"
+}
+
+- position: 1366
+  key: 90818
+  hash: 2850796093
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client945@example.com",
+  "id": 945,
+  "name": "Client 945"
+}
+
+========================================================================
+ZONE 13  start 2205  end 2208  length 4
+========================================================================
+- position: 2205
+  key: 84633
+  hash: 667398699
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client057@example.com",
+  "id": 57,
+  "name": "Client 57"
+}
+
+- position: 2206
+  key: 80225
+  hash: 2986994688
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client011@example.com",
+  "id": 11,
+  "name": "Client 11"
+}
+
+- position: 2207
+  key: 39159
+  hash: 3912444562
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client559@example.com",
+  "id": 559,
+  "name": "Client 559"
+}
+
+- position: 2208
+  key: 19240
+  hash: 2865039083
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client595@example.com",
+  "id": 595,
+  "name": "Client 595"
+}
+
+========================================================================
+ZONE 14  start 2586  end 2589  length 4
+========================================================================
+- position: 2586
+  key: 71136
+  hash: 4058155793
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client030@example.com",
+  "id": 30,
+  "name": "Client 30"
+}
+
+- position: 2587
+  key: 24643
+  hash: 3967353958
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client728@example.com",
+  "id": 728,
+  "name": "Client 728"
+}
+
+- position: 2588
+  key: 33905
+  hash: 2398152861
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client793@example.com",
+  "id": 793,
+  "name": "Client 793"
+}
+
+- position: 2589
+  key: 85131
+  hash: 3912624905
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client834@example.com",
+  "id": 834,
+  "name": "Client 834"
+}
+
+========================================================================
+ZONE 15  start 2744  end 2747  length 4
+========================================================================
+- position: 2744
+  key: 11401
+  hash: 3752822030
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client576@example.com",
+  "id": 576,
+  "name": "Client 576"
+}
+
+- position: 2745
+  key: 58257
+  hash: 2841464338
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client710@example.com",
+  "id": 710,
+  "name": "Client 710"
+}
+
+- position: 2746
+  key: 45623
+  hash: 243429051
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client116@example.com",
+  "id": 116,
+  "name": "Client 116"
+}
+
+- position: 2747
+  key: 63923
+  hash: 3434545698
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client731@example.com",
+  "id": 731,
+  "name": "Client 731"
+}
+
+========================================================================
+ZONE 16  start 2926  end 2929  length 4
+========================================================================
+- position: 2926
+  key: 20194
+  hash: 566124679
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client434@example.com",
+  "id": 434,
+  "name": "Client 434"
+}
+
+- position: 2927
+  key: 81749
+  hash: 93099304
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client131@example.com",
+  "id": 131,
+  "name": "Client 131"
+}
+
+- position: 2928
+  key: 86565
+  hash: 890289835
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client616@example.com",
+  "id": 616,
+  "name": "Client 616"
+}
+
+- position: 2929
+  key: 88302
+  hash: 240814756
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client801@example.com",
+  "id": 801,
+  "name": "Client 801"
+}
+
+========================================================================
+ZONE 17  start 2932  end 2935  length 4
+========================================================================
+- position: 2932
+  key: 55875
+  hash: 1019414009
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client826@example.com",
+  "id": 826,
+  "name": "Client 826"
+}
+
+- position: 2933
+  key: 67955
+  hash: 2459200995
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client073@example.com",
+  "id": 73,
+  "name": "Client 73"
+}
+
+- position: 2934
+  key: 76883
+  hash: 2573113209
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client624@example.com",
+  "id": 624,
+  "name": "Client 624"
+}
+
+- position: 2935
+  key: 32944
+  hash: 3373343131
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client768@example.com",
+  "id": 768,
+  "name": "Client 768"
+}
+
+========================================================================
+ZONE 18  start 3828  end 3831  length 4
+========================================================================
+- position: 3828
+  key: 32595
+  hash: 2271744389
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client054@example.com",
+  "id": 54,
+  "name": "Client 54"
+}
+
+- position: 3829
+  key: 480
+  hash: 440680675
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client962@example.com",
+  "id": 962,
+  "name": "Client 962"
+}
+
+- position: 3830
+  key: 61525
+  hash: 1193885006
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client709@example.com",
+  "id": 709,
+  "name": "Client 709"
+}
+
+- position: 3831
+  key: 43510
+  hash: 3706547374
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client202@example.com",
+  "id": 202,
+  "name": "Client 202"
+}
+
+========================================================================
+ZONE 19  start 3932  end 3935  length 4
+========================================================================
+- position: 3932
+  key: 73211
+  hash: 3770904601
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client369@example.com",
+  "id": 369,
+  "name": "Client 369"
+}
+
+- position: 3933
+  key: 8717
+  hash: 1063276236
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client076@example.com",
+  "id": 76,
+  "name": "Client 76"
+}
+
+- position: 3934
+  key: 17787
+  hash: 121314667
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client143@example.com",
+  "id": 143,
+  "name": "Client 143"
+}
+
+- position: 3935
+  key: 86212
+  hash: 170289868
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client684@example.com",
+  "id": 684,
+  "name": "Client 684"
+}
+
+========================================================================
+ZONE 20  start 4519  end 4522  length 4
+========================================================================
+- position: 4519
+  key: 64926
+  hash: 2060417354
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client789@example.com",
+  "id": 789,
+  "name": "Client 789"
+}
+
+- position: 4520
+  key: 35816
+  hash: 1661252204
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client307@example.com",
+  "id": 307,
+  "name": "Client 307"
+}
+
+- position: 4521
+  key: 89201
+  hash: 558957707
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client457@example.com",
+  "id": 457,
+  "name": "Client 457"
+}
+
+- position: 4522
+  key: 62153
+  hash: 3926369092
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client469@example.com",
+  "id": 469,
+  "name": "Client 469"
+}
+
+========================================================================
+ZONE 21  start 4749  end 4752  length 4
+========================================================================
+- position: 4749
+  key: 98809
+  hash: 185157711
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client365@example.com",
+  "id": 365,
+  "name": "Client 365"
+}
+
+- position: 4750
+  key: 79168
+  hash: 2729513738
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client521@example.com",
+  "id": 521,
+  "name": "Client 521"
+}
+
+- position: 4751
+  key: 66724
+  hash: 1646865312
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client810@example.com",
+  "id": 810,
+  "name": "Client 810"
+}
+
+- position: 4752
+  key: 51706
+  hash: 2771765286
+  data: {
+  "createdAt": "2025-11-12T10:04:13Z",
+  "email": "client815@example.com",
+  "id": 815,
+  "name": "Client 815"
+}
+

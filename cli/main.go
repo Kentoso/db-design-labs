@@ -203,7 +203,7 @@ func processLine(db *store.DB, line string) bool {
 				filtered = append(filtered, r)
 			}
 		}
-		fmt.Printf("dense_zones %d (threshold %d)\n", len(filtered), threshold)
+        fmt.Printf("dense_zones %d (threshold %d)\n", len(filtered), threshold)
         // write all details to dense_zones.txt (in current directory)
         if err := writeDenseZonesFile("dense_zones.txt", db, filtered); err != nil {
             fmt.Fprintf(os.Stderr, "write dense_zones.txt: %v\n", err)
@@ -215,9 +215,10 @@ func processLine(db *store.DB, line string) bool {
 		if len(filtered) < limit {
 			limit = len(filtered)
 		}
-		for i := 0; i < limit; i++ {
-			fmt.Printf("zone %d start %d length %d\n", i+1, filtered[i].start, filtered[i].length)
-		}
+        for i := 0; i < limit; i++ {
+            end := filtered[i].start + filtered[i].length - 1
+            fmt.Printf("zone %d start %d end %d length %d\n", i+1, filtered[i].start, end, filtered[i].length)
+        }
 	case "clear":
 		if err := db.Clear(); err != nil {
 			fmt.Fprintf(os.Stderr, "clear: %v\n", err)
@@ -242,7 +243,8 @@ func writeDenseZonesFile(path string, db *store.DB, runs []run) error {
     }
     sep := strings.Repeat("=", 72)
     for zi, r := range runs {
-        if _, err := fmt.Fprintf(f, "%s\nZONE %d  start %d  length %d\n%s\n", sep, zi+1, r.start, r.length, sep); err != nil {
+        end := r.start + r.length - 1
+        if _, err := fmt.Fprintf(f, "%s\nZONE %d  start %d  end %d  length %d\n%s\n", sep, zi+1, r.start, end, r.length, sep); err != nil {
             return err
         }
         for pos := r.start; pos < r.start+r.length; pos++ {
